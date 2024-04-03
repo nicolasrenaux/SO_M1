@@ -1,20 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define NUM_THREADS 3
 #define INTERVALO_DISPLAY 2
 #define LIMITE_PRODUTOS 100
 
-double peso_total = 0;
-int total_produtos = 0;
 double peso_esteira[NUM_THREADS] = {0, 0, 0};
-int count[NUM_THREADS] ={0,0,0};
+int count[NUM_THREADS] = {0, 0, 0};
 
-pthread_mutex_t semaforo = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_contagem = PTHREAD_MUTEX_INITIALIZER;
 
-// Função para cada esteira
+// Pipes
+int pipe_display[2];
+
 void* esteira(void* arg) {
     long id = (long)arg;
     double peso;
@@ -32,67 +35,73 @@ void* esteira(void* arg) {
     }
 
     while (1) {
-        usleep(intervalo * 1000000); // Convertendo segundos para microsegundos
+        usleep(intervalo * 1000000);
 
-        pthread_mutex_lock(&semaforo);
+        pthread_mutex_lock(&mutex_contagem);
         peso_esteira[id] += peso;
         count[id]++;
-
-
-        total_produtos++;
-
-        // peso_total += peso;
-        pthread_mutex_unlock(&semaforo);
+        pthread_mutex_unlock(&mutex_contagem);
     }
 
     return NULL;
 }
 
-// Função para a thread que exibe resultados
-void* exibe_resultados(void* arg) {
+// Função do processo filho para exibir os resultados
+void exibe_resultados() {
+    double peso[NUM_THREADS];
+    int local_count[NUM_THREADS];
+
     while (1) {
-        usleep(INTERVALO_DISPLAY * 1000000); // Convertendo segundos para microsegundos
+        read(pipe_display[0], &peso, sizeof(peso)); // Lê pesos atualizados
+        read(pipe_display[0], &local_count, sizeof(local_count)); // Lê contagens atualizadas
 
-        pthread_mutex_lock(&semaforo);
-        printf("Total de produtos: %d\n", total_produtos);
+        printf("Atualização dos valores:\n");
         for (int i = 0; i < NUM_THREADS; i++) {
-            printf("Esteira %d: Quantidade Produtos: %d Peso da esteira: %.2f kg\n", i + 1, count[i], peso_esteira[i]);
+            printf("Esteira %d: Produtos = %d, Peso = %.2f kg\n", i + 1, local_count[i], peso[i]);
         }
-
-        if (total_produtos >= LIMITE_PRODUTOS) {
-            for(int i = 0; i<NUM_THREADS; i++){
-                peso_total+=peso_esteira[i];
-            }
-
-            printf("Atenção: Total de produtos atingiu %d.\n", LIMITE_PRODUTOS);
-            printf("Peso total: %.2f kg\n\n", peso_total);
-            // Podemos terminar o programa ou continuar. Exemplo para terminar:
-            total_produtos = 0;
-            usleep(5.0 * 1000000); // Espera 5 segundos
-        }
-        pthread_mutex_unlock(&semaforo);
+        sleep(INTERVALO_DISPLAY);
     }
-
-    return NULL;
 }
 
 int main() {
     pthread_t threads[NUM_THREADS];
-    pthread_t thread_display;
 
-    // Criando threads para as esteiras
-    for (long i = 0; i < NUM_THREADS; i++) {
-        pthread_create(&threads[i], NULL, esteira, (void*)i);
+    // Cria o pipe para comunicação
+    if (pipe(pipe_display) == -1) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
     }
 
-    // Criando thread para exibição
-    pthread_create(&thread_display, NULL, exibe_resultados, NULL);
+    pid_t pid = fork();
+    if (pid == 0) { // Processo filho para exibição de resultados
+        close(pipe_display[1]); // Fecha o lado de escrita no filho
+        exibe_resultados();
+        exit(0);
+    } else if (pid > 0) { // Processo pai
+        close(pipe_display[0]); // Fecha o lado de leitura no pai
 
-    // Aguardando as threads terminarem (o que não acontecerá neste exemplo)
-    for (int i = 0; i < NUM_THREADS; i++) {
-        pthread_join(threads[i], NULL);
+        for (long i = 0; i < NUM_THREADS; i++) {
+            pthread_create(&threads[i], NULL, esteira, (void*)i);
+        }
+
+        // Atualiza os dados a serem exibidos a cada INTERVALO_DISPLAY segundos
+        while (1) {
+            sleep(INTERVALO_DISPLAY);
+            pthread_mutex_lock(&mutex_contagem);
+            write(pipe_display[1], &peso_esteira, sizeof(peso_esteira));
+            write(pipe_display[1], &count, sizeof(count));
+            pthread_mutex_unlock(&mutex_contagem);
+        }
+
+        for (int i = 0; i < NUM_THREADS; i++) {
+            pthread_join(threads[i], NULL);
+        }
+
+        wait(NULL); // Espera o processo filho terminar
+    } else {
+        perror("fork");
+        exit(EXIT_FAILURE);
     }
-    pthread_join(thread_display, NULL);
 
     return 0;
 }
