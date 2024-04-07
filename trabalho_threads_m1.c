@@ -41,8 +41,15 @@ void* esteira(void* arg) {
         if (!sistema_pausado) {
             peso_esteira[id] += peso;
             count[id]++;
-            if (count[id] % LIMITE_PRODUTOS == 0) {
+
+            if ((count[0]+count[1]+count[2]) % LIMITE_PRODUTOS == 0) {
                 total_produtos += LIMITE_PRODUTOS;
+
+                printf("\nAtualização dos valores:\n");
+                for (int i = 0; i < NUM_THREADS; i++) {
+                printf("Esteira %d: Produtos = %d, Peso = %.2f kg\n", i + 1, count[i], peso_esteira[i]);
+                }
+
                 printf("\nLimite de %d produtos atingido. Total de peso das esteiras: %.2f kg\n", total_produtos, peso_esteira[0] + peso_esteira[1] + peso_esteira[2]);
                 sleep(2);
             }
