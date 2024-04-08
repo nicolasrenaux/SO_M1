@@ -29,14 +29,14 @@ quantidade de itens sendo contados e pesados para realizar a pesagem total.
 
 A empresa também fornece uma análise das três esteiras:
 
-• Esteira 1: produtos de maior peso (5 Kg) – passa 1 item a cada segundo pelo sensor.
-• Esteira 2: produtos de peso médio (2 Kg) – passa 1 item a cada 0,5 segundo pelo sensor.
-• Esteira 3: produtos de menor peso (0,5 Kg) – passa 1 item a cada 0,1 segundo pelo
+- Esteira 1: produtos de maior peso (5 Kg) – passa 1 item a cada segundo pelo sensor.
+- Esteira 2: produtos de peso médio (2 Kg) – passa 1 item a cada 0,5 segundo pelo sensor.
+- Esteira 3: produtos de menor peso (0,5 Kg) – passa 1 item a cada 0,1 segundo pelo
 sensor.
-• A contagem deve acontecer initerruptamente.
-• A exibição no display deve atualizar a cada 2 segundos para os operadores poderem
+- A contagem deve acontecer initerruptamente.
+- A exibição no display deve atualizar a cada 2 segundos para os operadores poderem
 acompanhar.
-• Um operador pode usar um botão no equipamento para poder parar a contagem devido
+- Um operador pode usar um botão no equipamento para poder parar a contagem devido
 a um problema ocorrido.
 
 Diante da problemática apresentada, vocês terão que implementar uma aplicação (em nível de
