@@ -6,8 +6,8 @@ Alunos:
 
 Para executar o código você pode compilar ou usar o arquivo já compilado
 
-Compilar: gcc -o programa trabalho_threads_m1.c -lpthread
-Compilado: ./programa
+-> Compilar: gcc -o programa trabalho_threads_m1.c -lpthread
+-> Compilado: ./programa
 
 
 
