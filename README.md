@@ -4,6 +4,13 @@ Alunos:
 - Nicolas dos Santos Renaux
 - Pedro Henrique Camargo Ruthes
 
+Para executar o código você pode compilar ou usar o arquivo já compilado
+
+Compilar: gcc -o programa trabalho_threads_m1.c -lpthread
+Compilado: ./programa
+
+
+
 Problemática: 
 
 Uma Indústria de Alimentos de Santa Catarina chamada FoodSec S.A. possui a
